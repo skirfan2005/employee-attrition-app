@@ -59,7 +59,7 @@ menu = st.sidebar.radio(
 # 🏠 DASHBOARD
 # ----------------------------
 if menu == "Dashboard":
-    st.title("📊 HR Attrition Intelligence Dashboard")
+    st.title("📊 INTELLIGENT EMPLOYEE RETENTION SUPPPORT SYSTEM Dashboard")
 
     # Demo numbers (replace if dataset used)
     total_emp = 1000
@@ -128,7 +128,7 @@ elif menu == "Predict":
         'WorkLifeBalance': WorkLifeBalance,
         'OverTime': OverTime
     }])
-
+    df = df.apply(pd.to_numeric, errors='coerce').fillna(0)
     df = df.reindex(columns=feature_columns, fill_value=0)
     df_scaled = scaler.transform(df)
 
@@ -169,7 +169,25 @@ elif menu == "Bulk Prediction":
         st.dataframe(df.head())
 
         if st.button("⚡ Run Model"):
-            df_input = df.reindex(columns=feature_columns, fill_value=0)
+            df_input = df.copy()
+
+            # Encode categorical columns safely
+            for col in label_encoders:
+                if col in df_input.columns:
+                    try:
+                        df_input[col] = label_encoders[col].transform(df_input[col])
+                    except:
+                        df_input[col] = 0
+                else:
+                    df_input[col] = 0
+
+            # Fill missing columns
+            df_input = df_input.reindex(columns=feature_columns, fill_value=0)
+
+            # Ensure numeric
+            df_input = df_input.apply(pd.to_numeric, errors='coerce').fillna(0)
+
+            # Scale
             df_scaled = scaler.transform(df_input)
 
             probs = model.predict_proba(df_scaled)[:, 1]
